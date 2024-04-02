@@ -269,15 +269,27 @@ async function Main() {
   // let fileContent = readFileSync(filePath, 'utf-8')
   let filePathList = []
 
+  let sortFunc = (a: string, b: string) => {
+    let aList = a.split('-')
+    let aKey = aList[aList.length - 2] + '-' + aList[aList.length - 1]
+    let bList = a.split('-')
+    let bKey = bList[bList.length - 2] + '-' + bList[bList.length - 1]
+    return aKey.toLowerCase().localeCompare(bKey.toLowerCase())
+  }
+
   // 从Hybridclr目录里取文件名
   let fileDir = '/Users/zhaodongyue/WorkProjects/WeixinProjects/TopheroProfiler/HybridCLR'
   let files = readdirSync(fileDir)
+  files.sort(sortFunc)
   for (let fileName of files) {
     filePathList.push(fileDir + '/' + fileName)
   }
+
   // 从il2cpp目录里取文件名
   let fileDir2 = '/Users/zhaodongyue/WorkProjects/WeixinProjects/TopheroProfiler/il2cpp'
   let files2 = readdirSync(fileDir2)
+  // 给文件名排序
+  files2.sort(sortFunc)
   for (let fileName of files2) {
     filePathList.push(fileDir2 + '/' + fileName)
   }
