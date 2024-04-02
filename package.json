@@ -16,7 +16,8 @@
     "coverage": "npm run jest -- --coverage",
     "typecheck": "tsc --noEmit",
     "test": "./scripts/ci.sh",
-    "serve": "parcel assets/index.html --open --no-autoinstall"
+    "serve": "parcel assets/index.html --open --no-autoinstall",
+    "analyze": "ts-node src/analyzer/analyzejson.ts"
   },
   "files": [
     "bin/cli.js",
