@@ -177,7 +177,7 @@ async function ReadFileCalc(fileName: string, fileContent: string) {
     let calcTool = new FrameCalcTool()
     calcTool.frameList = frameInfoList
 
-    let keyList = Object.keys(collectDict)
+    let keyList = Object.keys(collectDict).sort()
     keyList.push('execute')
     keyList.push('interval')
     // 按照记录key计算
