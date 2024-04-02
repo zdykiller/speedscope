@@ -52,6 +52,7 @@
     "protobufjs": "6.8.8",
     "source-map": "0.6.1",
     "ts-jest": "24.3.0",
+    "ts-node": "^10.9.2",
     "typescript": "5.3.3",
     "typescript-json-schema": "0.42.0",
     "uglify-es": "3.2.2",
