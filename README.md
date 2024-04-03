@@ -1,3 +1,11 @@
+仓库来自github的 https://github.com/jlfwong/speedscope
+修改了逻辑 package.json中添加"analyze": "ts-node src/analyzer/analyzejson.ts"
+用npm run analyze即可执行，或者webstorm ide里能直接运行和调试
+主要代码参考目录里src/analyzer/analyzejson.ts
+
+===========
+
+
 English | [简体中文](./README-zh_CN.md)
 # 🔬speedscope 
 A fast, interactive web-based viewer for performance profiles. Supports import from a variety of profiles in a variety of languages (JS, Ruby, Python, Go & more). Try it here: https://www.speedscope.app

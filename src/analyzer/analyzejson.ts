@@ -270,15 +270,23 @@ async function Main() {
   let filePathList = []
 
   let sortFunc = (a: string, b: string) => {
+    let calcNumber = 3
     let aList = a.split('-')
-    let aKey = aList[aList.length - 2] + '-' + aList[aList.length - 1]
-    let bList = a.split('-')
-    let bKey = bList[bList.length - 2] + '-' + bList[bList.length - 1]
+    let aKey = ''
+    for (let i = 1; i < calcNumber + 1; i++) {
+      aKey = aList[aList.length - i] + '-' + aKey
+    }
+
+    let bKey = ''
+    let bList = b.split('-')
+    for (let i = 1; i < calcNumber + 1; i++) {
+      bKey = bList[bList.length - i] + '-' + bKey
+    }
     return aKey.toLowerCase().localeCompare(bKey.toLowerCase())
   }
 
   // 从Hybridclr目录里取文件名
-  let fileDir = '/Users/zhaodongyue/WorkProjects/WeixinProjects/TopheroProfiler/HybridCLR'
+  let fileDir = '/Users/admin/WorkProjects/WeChatProjects/Profiler/HybridCLR'
   let files = readdirSync(fileDir)
   files.sort(sortFunc)
   for (let fileName of files) {
@@ -286,7 +294,7 @@ async function Main() {
   }
 
   // 从il2cpp目录里取文件名
-  let fileDir2 = '/Users/zhaodongyue/WorkProjects/WeixinProjects/TopheroProfiler/il2cpp'
+  let fileDir2 = '/Users/admin/WorkProjects/WeChatProjects/Profiler/il2cpp'
   let files2 = readdirSync(fileDir2)
   // 给文件名排序
   files2.sort(sortFunc)
@@ -297,7 +305,7 @@ async function Main() {
   let count = 1
   // 分析文件，暂时先跳过大于100MB的文件，因为解析速度比较慢
   for (let filePath of filePathList) {
-    console.log(`filePath: ${filePath}`)
+    console.log(`=======filePath: ${filePath}=======`)
     if (statSync(filePath).size > 1024 * 1024 * 100) {
       console.log('file size > 100MB, skip')
       continue
@@ -310,7 +318,7 @@ async function Main() {
     try {
       await ReadFileCalc(fileName, fileContent)
     } catch (e) {
-      console.log(e)
+      console.log(`exception: ${e}`)
     }
     count++
     // if (count > 2) {
