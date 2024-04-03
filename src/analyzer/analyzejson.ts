@@ -29,7 +29,7 @@ class FrameCalcTool {
   }
 
   /**
-   * 排序分位数，并取结果
+   * 排序查对应的分位数，并取结果
    */
   getQuantile(numberArray: number[], quantile: number[]) {
     let length = numberArray.length
@@ -99,27 +99,40 @@ class FrameInfo {
   }
 }
 
+/**
+ * 读取文件并分析
+ * @param fileName 文件名，注意仅文件名，是用于区分的
+ * @param fileContent 文件读取的string内容
+ */
 async function ReadFileCalc(fileName: string, fileContent: string) {
   let promise = importProfileGroupFromText(fileName, fileContent)
   await promise.then(res => {
     if (res == null) {
+      console.error(`没有成功解析文件 ${fileName}`)
       return
     }
     let targetProfile: Profile | null = null
-    for (let profile of res.profiles) {
-      if (profile.getName().includes('CrRendererMain')) {
-        targetProfile = profile
-        break
+
+    if (res.name.includes('.json')) {
+      // timeline数据，从performance里获取到
+      for (let profile of res.profiles) {
+        if (profile.getName().includes('CrRendererMain')) {
+          targetProfile = profile
+          break
+        }
       }
+      if (targetProfile == null) {
+        console.error(`解析有效，但缺少CrRendererMain ${fileName}`)
+        return
+      }
+    } else if (res.name.includes('.cpuprofile')) {
+      // cpuprofile数据，从javascriptprofiler录制出来的，仅有一个profile
+      targetProfile = res.profiles[0]
     }
     if (targetProfile == null) {
-      console.error(`解析失败 ${fileName}`)
+      console.error(`解析有效，但没有找到有效的profile ${fileName}`)
       return
     }
-
-    // let totalWeight = targetProfile.getTotalWeight()
-    // appendTree 是按照时间排序的调用树，从早到晚，从上到下，取出来的root是个总体root，root的child才是真正的调用
-    // let root = targetProfile.getAppendOrderCalltreeRoot()
 
     let getColorBucketForFrame = function (f: Frame) {
       return 0
@@ -142,6 +155,51 @@ async function ReadFileCalc(fileName: string, fileContent: string) {
     let frameInfoList: FrameInfo[] = []
     let collectDict: {[key: string]: string} = {}
 
+    let isCallInDevTool = false
+    for (let i = 0; i < firstLine.length; i++) {
+      let child = firstLine[i].node
+      // 在开发者工具中调用，有cbWithTimeStamp函数
+      isCallInDevTool = isCallFunc(child, 'cbWithTimeStamp')
+      if (isCallInDevTool) {
+        break
+      }
+    }
+
+    // 火焰图总时长，微妙
+    let flameTotalWeight = flameChart.getTotalWeight()
+    // 非开发者工具，即真机上调用，去掉前5s 后5s时间，减少一些干扰，前提是时长够长
+
+    let startCut = 5 * 1000 * 1000
+    let endCut = 5 * 1000 * 1000
+    if (flameTotalWeight < startCut + endCut) {
+      console.log(`长度不够切分的`)
+      return
+    }
+
+    let startLimit = startCut
+    let endLimit = flameChart.getTotalWeight() - endCut
+    if (!isCallInDevTool) {
+      let tempFirstLine = []
+      for (let i = 0; i < firstLine.length; i++) {
+        let flameChartFrame = firstLine[i]
+        if (flameChartFrame.end < startLimit) {
+          // 时间是微秒，5s，早于5s的帧不要
+          continue
+        }
+        if (flameChartFrame.start > endLimit) {
+          // 时间是微秒，5s，晚于5s的帧不要
+          continue
+        }
+        tempFirstLine.push(flameChartFrame)
+      }
+      // 如果去掉了无用帧，那重新算时长
+      firstLine = tempFirstLine
+      flameTotalWeight = firstLine[firstLine.length - 1].end - firstLine[0].start
+      console.log(
+        `去掉了前 ${startCut / 1000 / 1000}秒，后 ${endCut / 1000 / 1000}秒，
+        从${flameChart.getTotalWeight() / 1000 / 1000}秒 => ${flameTotalWeight / 1000 / 1000}秒`,
+      )
+    }
     for (let i = 0; i < firstLine.length; i++) {
       let frameInfo = new FrameInfo()
 
@@ -158,8 +216,9 @@ async function ReadFileCalc(fileName: string, fileContent: string) {
         frameInfo.endTime = currFlameChartFrame.end
         frameInfo.nextStartTime = flameChart.getTotalWeight()
       }
-      // 检查此时是否回调到了Unity，特点是必定有cbWithTimeStamp函数
-      let isCallUnity = isCallFunc(child, 'cbWithTimeStamp')
+
+      // 检查此时是否回调到了Unity，用Browser_mainLoop_runner函数判断
+      let isCallUnity = isCallFunc(child, 'Browser_mainLoop_runner')
       if (isCallUnity) {
         callUnityWeight += child.getTotalWeight()
         callUnityCount += 1
@@ -194,11 +253,11 @@ async function ReadFileCalc(fileName: string, fileContent: string) {
     }
 
     // 总时长（秒）
-    let timeSecond = (flameChart.getTotalWeight() / 1000 / 1000).toFixed(2)
+    let timeSecond = (flameTotalWeight / 1000 / 1000).toFixed(2)
     // 调用unity的时长（秒）
     let callUnitySecond = (callUnityWeight / 1000 / 1000).toFixed(2)
     // unity帧执行占总时间的比
-    let ratio = (callUnityWeight / flameChart.getTotalWeight()).toFixed(2)
+    let ratio = (callUnityWeight / flameTotalWeight).toFixed(2)
     console.log(`文件名 ${fileName}`)
     console.log(`录制时长（秒）: ${timeSecond}`)
     console.log(
@@ -218,7 +277,7 @@ async function ReadFileCalc(fileName: string, fileContent: string) {
 }
 
 /**
- * 调用了查询整个调用栈是否调用了数据
+ * 调用了查询整个调用栈是否调用了某个方法
  * @param childNode
  * @param funcName 调用的函数名
  */
@@ -260,47 +319,62 @@ function CheckBaseBehaviourManager(childNode: CallTreeNode, weightDict: any) {
 }
 
 /**
- * 函数入口
- * @constructor
+ * 文件名排序，从后往前取3个-分割的字符串，然后排序
+ * 比如
+ * xxxx-大号-主城-静置.json
+ * xxxx-大号-冒险-静置.json
+ * xxxx-小号-主城-静置.json
+ * @param a
+ * @param b
  */
-async function Main() {
-  // let filePath =
-  //   '/Users/admin/WorkProjects/WeChatProjects/Profiler/HybridCLR/hybridclr-Profile-20240330T114746-大号-竞技场-战斗-有战斗画面_副本.json'
-  // let fileContent = readFileSync(filePath, 'utf-8')
-  let filePathList = []
-
-  let sortFunc = (a: string, b: string) => {
-    let calcNumber = 3
-    let aList = a.split('-')
-    let aKey = ''
-    for (let i = 1; i < calcNumber + 1; i++) {
-      aKey = aList[aList.length - i] + '-' + aKey
-    }
-
-    let bKey = ''
-    let bList = b.split('-')
-    for (let i = 1; i < calcNumber + 1; i++) {
-      bKey = bList[bList.length - i] + '-' + bKey
-    }
-    return aKey.toLowerCase().localeCompare(bKey.toLowerCase())
+let sortFunc = (a: string, b: string) => {
+  let calcNumber = 3
+  let aList = a.split('-')
+  let aKey = ''
+  for (let i = 1; i < calcNumber + 1; i++) {
+    aKey = aList[aList.length - i] + '-' + aKey
   }
+  let bKey = ''
+  let bList = b.split('-')
+  for (let i = 1; i < calcNumber + 1; i++) {
+    bKey = bList[bList.length - i] + '-' + bKey
+  }
+  return aKey.toLowerCase().localeCompare(bKey.toLowerCase())
+}
 
-  // 从Hybridclr目录里取文件名
-  let fileDir = '/Users/admin/WorkProjects/WeChatProjects/Profiler/HybridCLR'
+/**
+ * 获取文件夹下的文件名，并排序
+ * @param fileDir 文件夹路径
+ */
+function getSortFilePath(fileDir: string) {
+  let filePathList = []
+  // let fileDir = '/Users/admin/WorkProjects/WeChatProjects/Profiler/HybridCLR'
   let files = readdirSync(fileDir)
   files.sort(sortFunc)
   for (let fileName of files) {
     filePathList.push(fileDir + '/' + fileName)
   }
+  return filePathList
+}
 
-  // 从il2cpp目录里取文件名
-  let fileDir2 = '/Users/admin/WorkProjects/WeChatProjects/Profiler/il2cpp'
-  let files2 = readdirSync(fileDir2)
-  // 给文件名排序
-  files2.sort(sortFunc)
-  for (let fileName of files2) {
-    filePathList.push(fileDir2 + '/' + fileName)
-  }
+/**
+ * 函数入口
+ */
+async function Main() {
+  let filePathList: string[] = []
+  // 微信开发者工具里的profiler文件
+  // 从Hybridclr目录里取文件名
+  // let hybridFiles = getSortFilePath('/Users/admin/WorkProjects/WeChatProjects/Profiler/HybridCLR')
+  // filePathList = filePathList.concat(hybridFiles)
+  //
+  // // 从il2cpp目录里取文件名
+  // let il2cppFiles = getSortFilePath('/Users/admin/WorkProjects/WeChatProjects/Profiler/il2cpp')
+  // filePathList = filePathList.concat(il2cppFiles)
+
+  let magicv2HybridclrFiles = getSortFilePath(
+    '/Users/admin/WorkProjects/WeChatProjects/Profiler/magicv2_Hybridclr',
+  )
+  filePathList = filePathList.concat(magicv2HybridclrFiles)
 
   let count = 1
   // 分析文件，暂时先跳过大于100MB的文件，因为解析速度比较慢
