@@ -49,7 +49,7 @@ class FrameCalcTool {
    * 判断是否在开发者工具中调用
    * @param flameChart
    */
-  isCallDevTool(flameChart: Flamechart) {
+  isCallInDevTool(flameChart: Flamechart) {
     let layerStack = flameChart.getLayers()
     let firstLine = layerStack[0]
     let isCallInDevTool = false
@@ -211,7 +211,7 @@ async function ReadFileCalc(fileName: string, fileContent: string) {
     let calcTool = new FrameCalcTool()
 
     // 判断是否为
-    let isCallInDevTool = calcTool.isCallDevTool(flameChart)
+    let isCallInDevTool = calcTool.isCallInDevTool(flameChart)
 
     // 火焰图总时长，微妙
     let flameTotalWeight = flameChart.getTotalWeight()
