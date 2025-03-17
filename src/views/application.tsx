@@ -1,10 +1,12 @@
+import '../../assets/reset.css'
+import '../../assets/source-code-pro.css'
+
 import {h} from 'preact'
 import {StyleSheet, css} from 'aphrodite'
 
 import {ProfileGroup, SymbolRemapper} from '../lib/profile'
 import {FontFamily, FontSize, Duration} from './style'
 import {importEmscriptenSymbolMap as importEmscriptenSymbolRemapper} from '../lib/emscripten'
-import {SandwichViewContainer} from './sandwich-view'
 import {saveToFile} from '../lib/file-format'
 import {ActiveProfileState} from '../app-state/active-profile-state'
 import {LeftHeavyFlamechartView, ChronoFlamechartView} from './flamechart-view-container'
@@ -17,6 +19,7 @@ import {canUseXHR} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {HashParams} from '../lib/hash-params'
 import {StatelessComponent} from '../lib/preact-helpers'
+import {SandwichViewContainer} from './sandwich-view'
 
 const importModule = import('../import')
 
@@ -25,7 +28,7 @@ const importModule = import('../import')
 // We put them all in one place so we can directly control the relative priority
 // of these.
 importModule.then(() => {})
-import('../lib/demangle-cpp').then(() => {})
+import('../lib/demangle').then(() => {})
 import('source-map').then(() => {})
 
 async function importProfilesFromText(
@@ -168,6 +171,7 @@ export type ApplicationProps = {
 
 export class Application extends StatelessComponent<ApplicationProps> {
   private async loadProfile(loader: () => Promise<ProfileGroup | null>) {
+    this.props.setError(false)
     this.props.setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 0))
 

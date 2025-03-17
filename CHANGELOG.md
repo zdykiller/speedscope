@@ -1,3 +1,37 @@
+## [1.22.2] - 2025-02-15
+
+- 1.22.1
+- Update to working `open`, switch to ESM [[#499](https://github.com/jlfwong/speedscope/pull/499)] (by @flying-sheep)
+- Revert "Fix broken CLI dependency `open`" [[#498](https://github.com/jlfwong/speedscope/pull/498)] (by @flying-sheep)
+- Fix broken CLI dependency `open` [[#498](https://github.com/jlfwong/speedscope/pull/498)] (by @flying-sheep)
+- Update README.md [[#496](https://github.com/jlfwong/speedscope/pull/496)] (by @dkuku)
+
+## [1.22.1] - 2025-02-15
+
+- Update to working `open`, switch to ESM [[#499](https://github.com/jlfwong/speedscope/pull/499)] (by @flying-sheep)
+- Revert "Fix broken CLI dependency `open`" [[#498](https://github.com/jlfwong/speedscope/pull/498)] (by @flying-sheep)
+- Fix broken CLI dependency `open` [[#498](https://github.com/jlfwong/speedscope/pull/498)] (by @flying-sheep)
+- Update README.md [[#496](https://github.com/jlfwong/speedscope/pull/496)] (by @dkuku)
+
+## [1.22.0] - 2025-01-16
+
+- Add an example trace with rust mangling
+- Add support for Rust v0 symbol mangling scheme  [[#491](https://github.com/jlfwong/speedscope/pull/491)] (by @cerisier)
+
+## [1.21.2] - 2025-01-15
+
+- Switch from parcel to esbuild [[#432](https://github.com/jlfwong/speedscope/pull/432)] (by @jlfwong)
+- Revert "Upgrade to parcel 2.13.3" [[#492](https://github.com/jlfwong/speedscope/pull/492)] (by @jlfwong)
+- Upgrade to parcel 2.13.3 [[#492](https://github.com/jlfwong/speedscope/pull/492)] (by @jlfwong)
+- Add link to async-profiler wiki page to README
+
+## [1.21.0] - 2024-11-16
+
+- Add support for Instruments 16 Time Profile Deep Copy [[#484](https://github.com/jlfwong/speedscope/pull/484)] (by @robert3005)
+- Fix bug where import after error continues failing [[#463](https://github.com/jlfwong/speedscope/pull/463)] (by @tom93)
+- Bundle the font [[#472](https://github.com/jlfwong/speedscope/pull/472)] (by @Krinkle)
+- Clarify specification of startValue in speedscope file format [[#464](https://github.com/jlfwong/speedscope/pull/464)] (by @tom93)
+
 ## [1.20.0] - 2024-01-12
 
 - Partition based on samples instead of traceEvents when importing a sample-based chrome trace [[#460](https://github.com/jlfwong/speedscope/pull/460)] (by @zacharyfmarion)
